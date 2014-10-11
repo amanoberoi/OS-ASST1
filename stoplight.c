@@ -36,7 +36,8 @@ static struct lock *lock0;
 static struct lock *lock1;
 static struct lock *lock2;
 static struct lock *lock3;
-static struct lock *testlock;
+static int count = NCARS;
+
 
 /*
  *
@@ -48,12 +49,12 @@ static struct lock *testlock;
 static const char *directions[] = { "N", "E", "S", "W" };
 
 static const char *msgs[] = {
-        "approaching:",
+        "APPROACHING:",
         "region0:    ",
         "region1:    ",
         "region2:    ",
 		"region3:    ",
-        "leaving:    "
+        "LEAVING:    "
 };
 
 /* use these constants for the first parameter of message */
@@ -90,17 +91,11 @@ void
 gostraight(unsigned long cardirection,
            unsigned long carnumber,
 		   unsigned long destdirection)
-{
+{	
         
-		/*
-         * Avoid unused variable warnings.
-         */
-        
-        //(void) cardirection;
-        //(void) carnumber;
 		int lockrequired[2];
-		int i;
 		int acquiredAll;
+		//Checking the number of locks required
 		lockrequired[0]=cardirection;
 		if (cardirection==0){
 		lockrequired[1]=cardirection+3;
@@ -108,6 +103,9 @@ gostraight(unsigned long cardirection,
 		else{
 		lockrequired[1]=cardirection-1;
 		}
+		
+		message(0,carnumber,cardirection,destdirection);
+		//if N to S
 		do{
 		if(lockrequired[0]==0 && lockrequired[1]==3)
 		{
@@ -119,7 +117,6 @@ gostraight(unsigned long cardirection,
 		{
 		 lock_acquire(lock3);
 		 assert(lock_do_i_hold(lock3));
-		 //kprintf("%d passing by",carnumber);
 		 message(1,carnumber,cardirection,destdirection);
 		 message(4,carnumber,cardirection,destdirection);
 		 lock_release(lock0);
@@ -129,6 +126,7 @@ gostraight(unsigned long cardirection,
 		else lock_release(lock0);
 		}}
 		
+		//if S to N
 		else if(lockrequired[0]==2 && lockrequired[1]==1)
 		{if(lock2->owner==NULL)
 		{
@@ -138,7 +136,6 @@ gostraight(unsigned long cardirection,
 		{
 		 lock_acquire(lock1);
 		 assert(lock_do_i_hold(lock1));
-		 //kprintf("%d passing by",carnumber);
 		 message(3,carnumber,cardirection,destdirection);
 		 message(2,carnumber,cardirection,destdirection);
 		 lock_release(lock2);
@@ -149,6 +146,7 @@ gostraight(unsigned long cardirection,
 		}
 		}
 		
+		//if W to E
 		else if(lockrequired[0]==0 && lockrequired[1]==1)
 		{
 		 if(lock0->owner==NULL)
@@ -159,7 +157,6 @@ gostraight(unsigned long cardirection,
 		{
 		 lock_acquire(lock1);
 		 assert(lock_do_i_hold(lock1));
-		 //kprintf("%d passing by",carnumber);
 		 message(1,carnumber,cardirection,destdirection);
 		 message(2,carnumber,cardirection,destdirection);
 		 lock_release(lock0);
@@ -169,6 +166,7 @@ gostraight(unsigned long cardirection,
 		else lock_release(lock0);
 		}}
 		
+		// if E to W
 		else
 		{if(lock2->owner==NULL)
 		{
@@ -178,7 +176,6 @@ gostraight(unsigned long cardirection,
 		{
 		 lock_acquire(lock3);
 		 assert(lock_do_i_hold(lock3));
-		 //kprintf("%d passing by",carnumber);
 		 message(3,carnumber,cardirection,destdirection);
 		 message(4,carnumber,cardirection,destdirection);
 		 lock_release(lock2);
@@ -187,62 +184,10 @@ gostraight(unsigned long cardirection,
 		}
 		else lock_release(lock2);
 		}
-		
 		}
 		}while(acquiredAll!=2);
-		/* for(i=0;i<2;i++){
-		
-		switch(lockrequired[i]){
-		case 0: 
-		lock_acquire(lock0);
-		assert(lock_do_i_hold(lock0)==1);
-		
-		message(1,carnumber,cardirection,destdirection);
-		break;
-		case 1: lock_acquire(lock1);
-		assert(lock_do_i_hold(lock1)==1);
-		
-		message(2,carnumber,cardirection,destdirection);
-		break;
-		case 2: lock_acquire(lock2);
-		assert(lock_do_i_hold(lock2)==1);
-		
-		message(3,carnumber,cardirection,destdirection);
-		break;
-		case 3: lock_acquire(lock3);
-		assert(lock_do_i_hold(lock3)==1);
-		
-		message(4,carnumber,cardirection,destdirection);
-		break;
-		}
-		
-		}
-		for(i=0;i<2;i++){
-		
-		switch(lockrequired[i]){
-		case 0: 
-		assert(lock_do_i_hold(lock0)==1);
-		lock_release(lock0);
-		kprintf("\n%d have released lock 0",carnumber);
-		break;
-		case 1: 
-		assert(lock_do_i_hold(lock1)==1);
-		lock_release(lock1);
-	    kprintf("\n%d have released lock 1",carnumber);
-		break;
-		case 2: 
-		assert(lock_do_i_hold(lock2)==1);
-		lock_release(lock2);
-		kprintf("\n%d have released lock 2",carnumber);
-		break;
-		case 3: 
-		assert(lock_do_i_hold(lock3)==1);
-		lock_release(lock3);
-		kprintf("\n%d have released lock 3",carnumber);
-		break;
-		}
-		}
-		message(4,carnumber,cardirection,destdirection); */
+		message(5,carnumber,cardirection,destdirection);
+		count--;
 }
 
 
@@ -273,12 +218,11 @@ turnleft(unsigned long cardirection,
          * Avoid unused variable warnings.
          */
 
-        //(void) cardirection;
-        //(void) carnumber;
 		int lockrequired[3];
-		int i;
 		int acquiredAll;
 		lockrequired[0]=cardirection;
+		
+		//Checking the number of locks required
 		if (cardirection==0){
 		lockrequired[1]=3;
 		}
@@ -292,11 +236,12 @@ turnleft(unsigned long cardirection,
 		lockrequired[2]=lockrequired[1]-1;
 		}
 		
+		message(0,carnumber,cardirection,destdirection);
 		do{
 		
+		// if N to E
 		if(lockrequired[0]==0 && lockrequired[1]==3 && lockrequired[2]==2)
 		{
-		
 		if(lock0->owner==NULL)
 		{
 		lock_acquire(lock0);
@@ -309,7 +254,6 @@ turnleft(unsigned long cardirection,
 		{
 		 lock_acquire(lock2);
 		 assert(lock_do_i_hold(lock2));
-		 //kprintf("%d passing by",carnumber);
 		 message(1,carnumber,cardirection,destdirection);
 		 message(4,carnumber,cardirection,destdirection);
 		 message(3,carnumber,cardirection,destdirection);
@@ -325,8 +269,9 @@ turnleft(unsigned long cardirection,
 		}
 		else lock_release(lock0);
 		}
-		
 		}
+		
+		// if S to W
 		else if(lockrequired[0]==2 && lockrequired[1]==1&& lockrequired[2]==0)
 		{if(lock2->owner==NULL)
 		{
@@ -340,7 +285,6 @@ turnleft(unsigned long cardirection,
 		{
 		 lock_acquire(lock0);
 		 assert(lock_do_i_hold(lock0));
-		 //kprintf("%d passing by",carnumber);
 		 message(3,carnumber,cardirection,destdirection);
 		 message(2,carnumber,cardirection,destdirection);
 		 message(1,carnumber,cardirection,destdirection);
@@ -357,6 +301,8 @@ turnleft(unsigned long cardirection,
 		else lock_release(lock2);
 		}
 		}
+		
+		//if E to S
 		else if(lockrequired[0]==1 && lockrequired[1]==0&& lockrequired[2]==3)
 		{
 		 if(lock1->owner==NULL)
@@ -371,7 +317,6 @@ turnleft(unsigned long cardirection,
 		{
 		 lock_acquire(lock3);
 		 assert(lock_do_i_hold(lock3));
-		 //kprintf("%d passing by",carnumber);
 		 message(2,carnumber,cardirection,destdirection);
 		 message(1,carnumber,cardirection,destdirection);
 		 message(4,carnumber,cardirection,destdirection);
@@ -387,8 +332,9 @@ turnleft(unsigned long cardirection,
 		}
 		else lock_release(lock1);
 		}
-		
 		}
+		
+		//if W to N
 		else
 		{
 		if(lock3->owner==NULL)
@@ -403,7 +349,6 @@ turnleft(unsigned long cardirection,
 		{
 		 lock_acquire(lock1);
 		 assert(lock_do_i_hold(lock1));
-		 //kprintf("%d passing by",carnumber);
 		 message(4,carnumber,cardirection,destdirection);
 		 message(3,carnumber,cardirection,destdirection);
 		 message(2,carnumber,cardirection,destdirection);
@@ -419,64 +364,12 @@ turnleft(unsigned long cardirection,
 		}
 		else lock_release(lock3);
 		}
-		
 		}
-		}while(acquiredAll!=3);
-		//while loop till you get all three locks else release all locks
+		}while(acquiredAll!=3);	//while loop till you get all three locks else release all locks
 		
-		/* for(i=0;i<3;i++){
-		switch(lockrequired[i]){
-		case 0: lock_acquire(lock0);
-		assert(lock_do_i_hold(lock0)==1);
-		
-		message(1,carnumber,cardirection,destdirection);
-		break;
-		case 1: lock_acquire(lock1);
-		assert(lock_do_i_hold(lock1)==1);
-		
-		message(2,carnumber,cardirection,destdirection);
-		break;
-		case 2: lock_acquire(lock2);
-		assert(lock_do_i_hold(lock2)==1);
-		
-		message(3,carnumber,cardirection,destdirection);
-		break;
-		case 3: lock_acquire(lock3);
-		assert(lock_do_i_hold(lock3)==1);
-		
-		message(4,carnumber,cardirection,destdirection);
-		break;
-		}
-		
-		}
-		for(i=0;i<3;i++){
-		
-		switch(lockrequired[i]){
-		case 0: 
-		assert(lock_do_i_hold(lock0)==1);
-		lock_release(lock0);
-		kprintf("\n%d have released lock 0",carnumber);
-		break;
-		case 1: 
-		assert(lock_do_i_hold(lock1)==1);
-		lock_release(lock1);
-		kprintf("\n%d have released lock 1",carnumber);
-		break;
-		case 2: 
-		assert(lock_do_i_hold(lock2)==1);
-		lock_release(lock2);
-		kprintf("\n%d have released lock 2",carnumber);
-		break;
-		case 3: 
-		assert(lock_do_i_hold(lock3)==1);
-		lock_release(lock3);
-		kprintf("\n%d have released lock 3",carnumber);
-		break;
-		}
-		}
 		message(5,carnumber,cardirection,destdirection);
-		 */
-}
+		count--;
+} //end of turnleft
 
 
 /*
@@ -501,18 +394,16 @@ static void turnright(unsigned long cardirection, unsigned long carnumber,  unsi
          * Avoid unused variable warnings.
          */
 
-        //(void) cardirection;
-        //(void) carnumber;
 		int lockrequired;
-		
 		lockrequired=cardirection;
+		message(0,carnumber,cardirection,destdirection);
+		//checking for locks required and then acquiring them, after use releasing them
 		if(lockrequired==0)
 		{
 		lock_acquire(lock0);
 		assert(lock_do_i_hold(lock0)==1);
 		message(1,carnumber,cardirection,destdirection);
 		lock_release(lock0);
-		//kprintf("lock0 released");
 		}
 		else if(lockrequired==1)
 		{
@@ -520,7 +411,6 @@ static void turnright(unsigned long cardirection, unsigned long carnumber,  unsi
 		assert(lock_do_i_hold(lock1)==1);
 		message(2,carnumber,cardirection,destdirection);
 		lock_release(lock1);
-		//kprintf("lock1 released");
 		}
 		else if(lockrequired==2)
 		{
@@ -528,7 +418,6 @@ static void turnright(unsigned long cardirection, unsigned long carnumber,  unsi
 		assert(lock_do_i_hold(lock2)==1);
 		message(3,carnumber,cardirection,destdirection);
 		lock_release(lock2);
-		//kprintf("lock2 released");
 		}
 		else
 		{
@@ -536,58 +425,9 @@ static void turnright(unsigned long cardirection, unsigned long carnumber,  unsi
 		assert(lock_do_i_hold(lock3)==1);
 		message(4,carnumber,cardirection,destdirection);
 		lock_release(lock3);
-		//kprintf("lock3 released");
 		}
-		/* int lockrequired;
-		
-		lockrequired=cardirection;
-	
-		switch(lockrequired){
-		case 0: lock_acquire(lock0);
-		assert(lock_do_i_hold(lock0)==1);
-		message(1,carnumber,cardirection,destdirection);
-		break;
-		case 1: lock_acquire(lock1);
-		assert(lock_do_i_hold(lock1)==1);
-		message(2,carnumber,cardirection,destdirection);
-		break;
-		case 2: lock_acquire(lock2);
-		assert(lock_do_i_hold(lock2)==1);
-		message(3,carnumber,cardirection,destdirection);
-		break;
-		case 3: lock_acquire(lock3);
-		assert(lock_do_i_hold(lock3)==1);
-		message(4,carnumber,cardirection,destdirection);
-		
-		break;
-		}
-		
-		
-		
-		
-		switch(lockrequired){
-		case 0: 
-		assert(lock_do_i_hold(lock0)==1);
-		lock_release(lock0);
-		kprintf("\n%d have released lock 0",carnumber);
-		break;
-		case 1: 
-		assert(lock_do_i_hold(lock1)==1);
-		lock_release(lock1);
-	kprintf("\n%d have released lock 1",carnumber);
-		break;
-		case 2: 
-		assert(lock_do_i_hold(lock2)==1);
-		lock_release(lock2);
-		kprintf("\n%d have released lock 2",carnumber);
-		break;
-		case 3: 
-		assert(lock_do_i_hold(lock3)==1);
-		lock_release(lock3);
-		kprintf("\n%d have released lock 3",carnumber);
-		break;
-		}
-		message(5,carnumber,cardirection,destdirection); */
+		message(5,carnumber,cardirection,destdirection);
+		count--;
 }
 
 /*
@@ -612,8 +452,7 @@ static void turnright(unsigned long cardirection, unsigned long carnumber,  unsi
  
 static void approachintersection(void * unusedpointer, unsigned long carnumber)
 { 
-		//kprintf("\n%d\n",carnumber);
-		//lock_acquire(testlock);
+		
         int cardirection;
 		int destdirection;
 		int car_no=carnumber;
@@ -621,15 +460,9 @@ static void approachintersection(void * unusedpointer, unsigned long carnumber)
         /*
          * Avoid unused variable and function warnings.
          */
-
-
+		 
         (void) unusedpointer;
-		/*
-        (void) carnumber;
-	(void) gostraight;
-	(void) turnleft;
-	(void) turnright;
-*/
+		
         /*
          * cardirection is set randomly.
          */
@@ -639,15 +472,13 @@ static void approachintersection(void * unusedpointer, unsigned long carnumber)
 		destdirection = (cardirection + destdirection + 1) % 4;
 		
 		
-		if(cardirection-destdirection==2 || destdirection-cardirection==2)
-		
+		if(cardirection-destdirection==2 || destdirection-cardirection==2) //if car wants to go straight
 		gostraight(cardirection,car_no,destdirection);
-		else if(destdirection-cardirection==1 || cardirection-destdirection==3)
+		else if(destdirection-cardirection==1 || cardirection-destdirection==3) //if car wants to turn left
 		turnleft(cardirection,car_no,destdirection);
-		else
+		else 																	//else the car wants to turn right
 		turnright(cardirection,car_no,destdirection);
-	//	lock_release(testlock);
-		//kprintf("lock released and others should resume %d",carnumber);
+		
 }
 
 
@@ -668,14 +499,14 @@ static void approachintersection(void * unusedpointer, unsigned long carnumber)
 
 int createcars(int nargs, char ** args)
 {
-        int index, error,count;
+        int index, error;
  
         lock0 = lock_create("lock0");
 		lock1=lock_create("lock1");
 		lock2=lock_create("lock2");
 		lock3=lock_create("lock3");
-		testlock=lock_create("testlock");
-		count=NCARS;
+		
+		
         /*
          * Avoid unused variable warnings.
          */
@@ -704,16 +535,19 @@ int createcars(int nargs, char ** args)
                         
                         panic("approachintersection: thread_fork failed: %s\n",strerror(error));
                 }
-        }while(1);
-		count--;
-		kprintf("\n%d count value\n",count);
-		if(count<=0){
-		
+				
+        }
+		while(1)
+		{
+		if(count==0)
+		{
 		lock_destroy(lock0);
 		lock_destroy(lock1);
 		lock_destroy(lock2);
 		lock_destroy(lock3);
-		kprintf("all locks destroyed");
+		kprintf("All locks destroyed. \n");
+		break;
+		}
 		}
         return 0;
 }
