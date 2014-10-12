@@ -36,7 +36,7 @@ static struct lock *lock0;
 static struct lock *lock1;
 static struct lock *lock2;
 static struct lock *lock3;
-static int count = NCARS;
+int count;
 
 
 /*
@@ -188,6 +188,7 @@ gostraight(unsigned long cardirection,
 		}while(acquiredAll!=2);
 		message(5,carnumber,cardirection,destdirection);
 		count--;
+		kprintf("count: %d",count);
 }
 
 
@@ -369,6 +370,7 @@ turnleft(unsigned long cardirection,
 		
 		message(5,carnumber,cardirection,destdirection);
 		count--;
+		kprintf("count: %d",count);
 } //end of turnleft
 
 
@@ -428,6 +430,7 @@ static void turnright(unsigned long cardirection, unsigned long carnumber,  unsi
 		}
 		message(5,carnumber,cardirection,destdirection);
 		count--;
+		kprintf("count: %d",count);
 }
 
 /*
@@ -500,7 +503,7 @@ static void approachintersection(void * unusedpointer, unsigned long carnumber)
 int createcars(int nargs, char ** args)
 {
         int index, error;
- 
+		count=NCARS;
         lock0 = lock_create("lock0");
 		lock1=lock_create("lock1");
 		lock2=lock_create("lock2");

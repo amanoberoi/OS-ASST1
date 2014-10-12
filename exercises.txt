@@ -1,0 +1,146 @@
+1. Assume that the residents of Podunk are exceptional and follow the old (and widely ignored) convention that whoever arrives
+at the intersection first proceeds first. Using the language of synchronization primitives describe the way this intersection is controlled. 
+In what ways is this method suboptimal?
+
+Ans: Consider the directions and messages to be printed in the following way:
+static const char *directions[] = { "N", "E", "S", "W" };
+
+static const char *msgs[] = {
+        "APPROACHING:",
+        "region0:    ",
+        "region1:    ",
+        "region2:    ",
+		"region3:    ",
+        "LEAVING:    "
+};
+
+Print the messages of each car and its current scenario.
+
+static void
+message(int msg_no, int carnumber, int cardirection, int destdirection)
+{
+        kprintf("%s car = %2d, direction = %s, destination = %s\n",
+                msgs[msg_no], carnumber,
+                directions[cardirection], directions[destdirection]);
+}
+
+The traffic intersection is divided into four regions:			N
+																|
+																|
+														0		|		1
+																|
+												W----------------------------------E
+																|
+														3		|		2
+																|
+																|
+																S
+Assuming the first come first serve concept, consider the cars approaching the intersection would be handled in the following way:
+
+approachintersection()
+{
+lock_acquire(lock);
+assert(lock_do_i_hold(lock));
+
+//Choose random car and destination direction;
+
+if(abs(cardirection-destdirection)==2)
+gostraight();
+else if(destdirection-cardirection==1 || cardirection-destdirection==3)
+turnleft();
+else
+turnright();
+
+lock_release(lock);
+}
+
+Notice that here we require only one lock which shall be acquired by one car at a time. This lock shall be applied to the entire
+intersection and will remain with the car until it leaves the intersection. It shall release the lock after leaving the intersection 
+which shall be acquired by the next car that arrived at the intersection.
+
+goahead()
+{
+if(S to N)
+Print message accordingly;
+if(N to S)
+Print message accordingly;
+if(E to W)
+Print message accordingly;
+if(W to E)
+Print message accordingly;
+}
+
+Similarly, we can define the other functions like turnright and turnleft.
+The reason that this approach is suboptimal is that some cars may have to wait for longer time 
+in order for the other cars that came before them to leave the intersection. 
+Even though the intersection area required by the cars that came later are free they will have to wait 
+for the cars that came earlier to pass the intersection.
+
+
+
+
+
+2. Now, assume that the residents of Podunk are like most people and do not follow the convention described above. 
+In what one instance can this four-way-stop intersection produce a deadlock? (It will be helpful to think of this in terms of the model
+we are using instead of trying to visualize an actual intersection).
+
+Ans: Deadlock occurs when all the processes have held the resources needed by other processes and none of them are ready to give up the resources held by them.
+In our model each region of the intersection needed is locked by the threads(i.e. cars) one by one as they reach it. 
+
+Suppose that multiple threads try to acquire the resources that they need and all of them succeed in acquiring only one of the resources out of all 
+and wait for resources that are held by other threads. And in such situation each thread is waiting for another thread.
+
+
+For e.g. Assume there are four threads and four locks.
+Thread1 acquires lock1 but also wants lock2.
+Thread2 acquires lock3 but also wants lock4.
+Thread3 acquires lock4 but also wants lock1.
+Thread4 acquires lock2 but also wants lock3.
+
+Thread1
+{
+lock_acquire(lock1);
+lock_acquire(lock2);
+
+//Critical section
+
+lock_release(lock1);
+lock_release(lock2);
+}
+
+Thread2
+{
+lock_acquire(lock3);
+lock_acquire(lock4);
+
+//Critical section
+
+lock_release(lock3);
+lock_release(lock4);
+}
+
+Thread3
+{
+lock_acquire(lock4);
+lock_acquire(lock1);
+
+//Critical section
+
+lock_release(lock4);
+lock_release(lock1);
+}
+
+Thread4
+{
+lock_acquire(lock2);
+lock_acquire(lock3);
+
+//Critical section
+
+lock_release(lock2);
+lock_release(lock3);
+}
+
+In the above example, all four threads run concurrently and each of them acquire the first lock. 
+However, when they try to acquire the second lock they do not succeed and go to sleep. 
+So, none of them release their locks resulting in a deadlock.
