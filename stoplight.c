@@ -188,7 +188,7 @@ gostraight(unsigned long cardirection,
 		}while(acquiredAll!=2);
 		message(5,carnumber,cardirection,destdirection);
 		count--;
-		kprintf("count: %d",count);
+		
 }
 
 
@@ -370,7 +370,7 @@ turnleft(unsigned long cardirection,
 		
 		message(5,carnumber,cardirection,destdirection);
 		count--;
-		kprintf("count: %d",count);
+		
 } //end of turnleft
 
 
@@ -430,7 +430,7 @@ static void turnright(unsigned long cardirection, unsigned long carnumber,  unsi
 		}
 		message(5,carnumber,cardirection,destdirection);
 		count--;
-		kprintf("count: %d",count);
+		
 }
 
 /*
